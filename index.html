@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2on2対戦ゲーム講習</title>
+    <style>
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(12, 50px);
+            grid-template-rows: repeat(12, 50px);
+            gap: 1px;
+            width: 602px;
+            height: 602px;
+            background-color: #ddd;
+            position: relative;
+        }
+        .cell {
+            width: 60px;
+            height: 60px;
+            background-color: white;
+            border: 1px solid #ccc;
+        }
+        .character {
+            width: 70px;
+            height: 70px;
+            position: absolute;
+            cursor: grab;
+            background-size: cover;
+        }
+        .cost-selection {
+            margin-top: 20px;
+        }
+        .cost-group {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="grid" id="grid"></div>
+    
+    <div class="cost-selection" id="cost-selection">
+        <select id="character-select">
+            <option value="">キャラを選択</option>
+        </select>
+        <button onclick="selectCharacter()">追加</button>
+        <button onclick="clearCharacters()">全削除</button>
+    </div>
+    
+    <script>
+        const grid = document.getElementById('grid');
+        for (let i = 0; i < 12 * 12; i++) {
+            let cell = document.createElement('div');
+            cell.className = 'cell';
+            grid.appendChild(cell);
+        }
+
+        const costCategories = {
+            '30': [...Array(9).keys()].map(i => `item${i + 1}`).concat(['item36']),
+            '25': [...Array(10).keys()].map(i => `item${i + 10}`),
+            '20': [...Array(11).keys()].map(i => `item${i + 20}`),
+            '15': [...Array(5).keys()].map(i => `item${i + 31}`)
+        };
+        
+        const characterNames = [
+            "グリフィン", "スズラン", "影", "キャヴァリー", "ラジエル", 
+            "エルフィン", "シュウウ", "ヒカリ", "ケルビム", 
+            "シャープ", "スカイセーバー", "シャオリン", "18号", "アンジェリス", 
+            "フリード", "シグナス", "アリス", "カゼ", "ヴァルキア","アイーダ",  
+            "ヴァーチェ", "セラフィム", "スコーピオン", "パラス", "ベータ", 
+            "エミカ", "デュカリオン", "チンニ", "ザハロワ", "ダークスター", 
+            "ローランド", "スノーウォル", "ヤミン", "カタリナ", "オーキッド", "ライン"
+        ];
+
+        const characterSelect = document.getElementById('character-select');
+        let characterCount = 0;
+        const maxCharacters = 4;
+
+        Object.entries(costCategories).forEach(([cost, items]) => {
+            let optgroup = document.createElement('optgroup');
+            optgroup.label = `コスト${cost}`;
+            
+            items.forEach(item => {
+                let option = document.createElement('option');
+                option.value = item;
+                let index = parseInt(item.replace('item', '')) - 1;
+                option.textContent = characterNames[index];
+                optgroup.appendChild(option);
+            });
+            
+            characterSelect.appendChild(optgroup);
+        });
+
+        function selectCharacter() {
+            if (characterCount >= maxCharacters) return;
+            
+            let selectedValue = characterSelect.value;
+            if (!selectedValue) return;
+            
+            let character = document.createElement('div');
+            character.className = 'character';
+            character.style.backgroundImage = `url('images/${selectedValue}.png')`;
+            character.style.top = '0px';
+            character.style.left = '0px';
+            grid.appendChild(character);
+            makeDraggable(character);
+            
+            characterCount++;
+        }
+
+        function clearCharacters() {
+            document.querySelectorAll('.character').forEach(char => char.remove());
+            characterCount = 0;
+        }
+
+        function makeDraggable(char) {
+            char.onmousedown = function(event) {
+                let shiftX = event.clientX - char.getBoundingClientRect().left;
+                let shiftY = event.clientY - char.getBoundingClientRect().top;
+                
+                function moveAt(pageX, pageY) {
+                    char.style.left = pageX - shiftX + 'px';
+                    char.style.top = pageY - shiftY + 'px';
+                }
+                
+                function onMouseMove(event) {
+                    moveAt(event.pageX, event.pageY);
+                }
+                
+                document.addEventListener('mousemove', onMouseMove);
+                
+                char.onmouseup = function() {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    char.onmouseup = null;
+                };
+            };
+            
+            char.ondragstart = function() {
+                return false;
+            };
+        }
+    </script>
+</body>
+</html>
